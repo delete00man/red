@@ -1,0 +1,5 @@
+classes= 1
+train  = [doc_dataset]/plaque_training.txt
+valid  = [doc_dataset]/plaque_test.txt
+names = [doc_dataset]/plaque.names
+backup = backup
