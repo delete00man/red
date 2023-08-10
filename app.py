@@ -30,12 +30,14 @@ def crop(directory):
     net = cv2.dnn.readNet("static/Model/plaque_yolov4_29-07-23.weights", "static/Model/plaque_yolov4.cfg")
     classes = ["plaque de cadre"]
 
-    # Récupérer les noms des couches de sortie du réseau
+    # Charger les noms des couches de sortie du réseau YOLO
     layer_names = net.getLayerNames()
     output_layers_indices = net.getUnconnectedOutLayers()
 
-    # Convertir les indices en noms de couches
-    output_layers = [layer_names[i[0] - 1] for i in output_layers_indices]
+    # Convertir les indices en noms de couches de sortie
+    output_layers = []
+    for i in output_layers_indices:
+        output_layers.append(layer_names[i[0] - 1])
 
     # Charger l'image
     directory_path = "Images/" + new_directory
