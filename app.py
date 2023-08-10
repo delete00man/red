@@ -28,7 +28,10 @@ def crop(directory):
 
     # Récupérer les noms des couches de sortie du réseau
     layer_names = net.getLayerNames()
-    output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+    output_layers_indices = net.getUnconnectedOutLayers()
+
+    # Convertir les indices en noms de couches
+    output_layers = [layer_names[i[0] - 1] for i in output_layers_indices]
 
     # Charger l'image
     directory_path = "Images/" + new_directory
