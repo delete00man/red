@@ -16,11 +16,15 @@ def crop(directory):
     image_directory = directory
     copy_image_directory = "Images"
     shutil.copytree(image_directory, copy_image_directory)
+    print("IMAGES DIRECTORY CREATED")
     shutil.rmtree("Images/__MACOSX")
     new_directory = os.listdir("Images")[0]
     os.makedirs("Images/Autres")
+    print("IMAGES/autres DIRECTORY CREATED")
     os.makedirs("Images/Succes")
+    print("IMAGES/succes DIRECTORY CREATED")
     os.makedirs("Images/Echec")
+    print("IMAGES/echec DIRECTORY CREATED")
 
     # Charger le modèle YOLO pré-entraîné
     net = cv2.dnn.readNet("static/Model/plaque_yolov4_29-07-23.weights", "static/Model/plaque_yolov4.cfg")
@@ -82,10 +86,13 @@ def crop(directory):
 
         # Chemin complet de l'image de sortie
             os.makedirs("Traitement", exist_ok=True)
+            print("Traitement DIRECTORY CREATED")
             os.makedirs("Traitement/Echec", exist_ok=True)
+            print("traitement/echec DIRECTORY CREATED")
             chemin_image_sortie = "Traitement/" + image.rstrip(".jpg") + "_cropped.jpg"
         # Enregistrement de l'image de sortie
             cv2.imwrite(chemin_image_sortie, cropped_object)
+            print("IMAGES Saved")
 
         else:
             chemin_image_sortie = "Traitement/Echec/" + image
@@ -206,12 +213,14 @@ def upload():
         os.remove("Images.zip")
 
     os.makedirs("uploads")
+    print("uploads DIRECTORY CREATED")
     if request.method == 'POST':
         uploaded_zip = request.files['zip_file']
         if uploaded_zip:
             with tempfile.TemporaryDirectory() as temp_dir:
                 zip_path = os.path.join(temp_dir, uploaded_zip.filename)
                 uploaded_zip.save(zip_path)
+                print("zip imported")
                 with ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(app.config['UPLOAD_FOLDER'])
                 process_folder(app.config['UPLOAD_FOLDER'])
