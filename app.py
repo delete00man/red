@@ -16,38 +16,47 @@ def crop(directory):
     image_directory = directory
     copy_image_directory = "Images"
     shutil.copytree(image_directory, copy_image_directory)
-    print("IMAGES DIRECTORY CREATED")
-    shutil.rmtree("Images/__MACOSX")
-    new_directory = os.listdir("Images")[0]
+    for f in os.listdir(copy_image_directory):
+        if f == "__MACOSX":
+            shutil.rmtree("Images/__MACOSX")
     os.makedirs("Images/Autres")
-    print("IMAGES/autres DIRECTORY CREATED")
     os.makedirs("Images/Succes")
-    print("IMAGES/succes DIRECTORY CREATED")
     os.makedirs("Images/Echec")
-    print("IMAGES/echec DIRECTORY CREATED")
 
     # Charger le modèle YOLO pré-entraîné
     net = cv2.dnn.readNet("static/Model/plaque_yolov4_29-07-23.weights", "static/Model/plaque_yolov4.cfg")
     classes = ["plaque de cadre"]
 
-    # Charger les noms des couches de sortie du réseau YOLO
+    # Récupérer les noms des couches de sortie du réseau
     layer_names = net.getLayerNames()
-    output_layers_indices = net.getUnconnectedOutLayers()
-
-    # Convertir les indices en noms de couches de sortie
-    output_layers = []
-    for i in output_layers_indices:
-        output_layers.append(layer_names[i[0] - 1])
+    output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
     # Charger l'image
-    directory_path = "Images/" + new_directory
-    directory_list = os.listdir(directory_path)
+    directory_list_ok = []
+    directory_list = os.listdir("Images")
+    directory_list.remove("Echec")
+    directory_list.remove("Autres")
+    directory_list.remove("Succes")
+    print("directory_list: ")
+    print(directory_list)
     for f in directory_list:
+        if f.endswith(".jpg") or f.endswith(".jpeg"):
+            directory_list_ok.append(f)
+    print(directory_list_ok)
+    # DOSSIERS
+    if directory_list_ok == [] and len(directory_list) == 1:
+        directory_list_verify = os.path.join("Images", directory_list[0])
+        directory_list_ok = os.listdir(directory_list_verify)
+    for f in directory_list_ok:
         if f == ".DS_Store":
-            directory_list.remove(".DS_Store")
+            directory_list_ok.remove(f)
+    print(directory_list_ok)
 
-    for image in directory_list:
-        img = cv2.imread(directory_path + "/" + image)
+    for image in directory_list_ok:
+        if len(directory_list) == 1:
+            img = cv2.imread("Images" + "/" + directory_list[0] + "/" + image)
+        else:
+            img = cv2.imread("Images" + "/" + image)
         img = cv2.resize(img, None, fx=0.4, fy=0.4)  # Redimensionner l'image pour accélérer le traitement
         height, width, channels = img.shape
 
@@ -88,13 +97,10 @@ def crop(directory):
 
         # Chemin complet de l'image de sortie
             os.makedirs("Traitement", exist_ok=True)
-            print("Traitement DIRECTORY CREATED")
             os.makedirs("Traitement/Echec", exist_ok=True)
-            print("traitement/echec DIRECTORY CREATED")
             chemin_image_sortie = "Traitement/" + image.rstrip(".jpg") + "_cropped.jpg"
         # Enregistrement de l'image de sortie
             cv2.imwrite(chemin_image_sortie, cropped_object)
-            print("IMAGES Saved")
 
         else:
             chemin_image_sortie = "Traitement/Echec/" + image
@@ -110,7 +116,12 @@ def zip_file(src, dst):
     src_files.remove("Autres")
     src_files.remove("Echec")
     src_files.remove("Succes")
-    shutil.rmtree(src + "/" + src_files[0])
+    if len(src_files) == 1:
+        shutil.rmtree(src + "/" + src_files[0])
+    else:
+        for f in src_files:
+            if f == f.endswith(".jpg"):
+                os.remove(src + "/" + f)
 
     # Chemin de l'archive ZIP que vous souhaitez créer
     zip_file_path = dst
@@ -174,12 +185,15 @@ def process_folder(folder_path):
     directory_path.remove("Autres")
     directory_path.remove("Echec")
     directory_path.remove("Succes")
-    directory_path = directory_path[0]
+    if directory_path[0].endswith(".jpg") or directory_path[0].endswith(".jpeg"):
+        directory_path = ""
+    else:
+        directory_path = directory_path[0]
 
     traitement_directory = [f for f in os.listdir("Traitement") if f not in (".DS_Store", "Echec", "result.txt")]
 
     for image in traitement_directory:
-        if image.endswith(".jpg"):
+        if image.endswith(".jpg") or image.endswith(".jpeg") :
             source_path = os.path.join(directory, directory_path, f"{image.rstrip('_cropped.jpg')}.jpg")
             json_path = ocr(os.path.join("Traitement", image))
             result = choice(json_path)
@@ -191,7 +205,7 @@ def process_folder(folder_path):
     echec_directory = [f for f in os.listdir(os.path.join("Traitement", "Echec")) if f != ".DS_Store"]
 
     for image in echec_directory:
-        if image.endswith(".jpg"):
+        if image.endswith(".jpg") or image.endswith(".jpeg"):
             source_path = os.path.join(directory, directory_path, image)
             json_path = ocr(os.path.join("Traitement", "Echec", image))
             result = choice(json_path)
@@ -215,14 +229,12 @@ def upload():
         os.remove("Images.zip")
 
     os.makedirs("uploads")
-    print("uploads DIRECTORY CREATED")
     if request.method == 'POST':
         uploaded_zip = request.files['zip_file']
         if uploaded_zip:
             with tempfile.TemporaryDirectory() as temp_dir:
                 zip_path = os.path.join(temp_dir, uploaded_zip.filename)
                 uploaded_zip.save(zip_path)
-                print("zip imported")
                 with ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(app.config['UPLOAD_FOLDER'])
                 process_folder(app.config['UPLOAD_FOLDER'])
