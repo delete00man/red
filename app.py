@@ -1,8 +1,8 @@
+import numpy as np
 from flask import Flask, render_template, request, redirect, url_for, send_file
 from zipfile import ZipFile
 import tempfile
 import cv2
-import numpy as np
 import os
 import shutil
 import re
@@ -28,8 +28,7 @@ def crop(directory):
     classes = ["plaque de cadre"]
 
     # Récupérer les noms des couches de sortie du réseau
-    layer_names = net.getLayerNames()
-    output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+    output_layers = net.getUnconnectedOutLayersNames()
 
     # Charger l'image
     directory_list_ok = []
@@ -53,24 +52,26 @@ def crop(directory):
     print(directory_list_ok)
 
     for image in directory_list_ok:
+        print(image, 1)
         if len(directory_list) == 1:
             img = cv2.imread("Images" + "/" + directory_list[0] + "/" + image)
         else:
             img = cv2.imread("Images" + "/" + image)
-        img = cv2.resize(img, None, fx=0.4, fy=0.4)  # Redimensionner l'image pour accélérer le traitement
-        height, width, channels = img.shape
-
+        print(image, 2)
     # Prétraitement de l'image pour la détection
+        img = cv2.resize(img, None, fx=0.4, fy=0.4)
+        height, width, channels = img.shape
         blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
         net.setInput(blob)
         outs = net.forward(output_layers)
-
+        print(image, outs, 3)
     # Initialisation des variables pour le meilleur objet
         best_confidence = 0
         best_box = None
-
+        print(image, 4)
     # Parcourir les détections d'objets
         for out in outs:
+            print(out, image)
             for detection in out:
                 scores = detection[5:]
                 class_id = np.argmax(scores)
@@ -89,22 +90,28 @@ def crop(directory):
                     y = int(center_y - h / 2)
 
                     best_box = (x, y, w, h)
+                    print(image, best_box, 5)
 
     # Enregistrer l'image finale dans un dossier
         if best_box is not None:
             x, y, w, h = best_box
+            print(image, best_box, 6)
             cropped_object = img[y:y + h, x:x + w]
 
+            print(cropped_object, image, "CROP IMAGE", 7)
         # Chemin complet de l'image de sortie
             os.makedirs("Traitement", exist_ok=True)
             os.makedirs("Traitement/Echec", exist_ok=True)
             chemin_image_sortie = "Traitement/" + image.rstrip(".jpg") + "_cropped.jpg"
         # Enregistrement de l'image de sortie
+            print(chemin_image_sortie, cropped_object)
             cv2.imwrite(chemin_image_sortie, cropped_object)
+            print("enrgistre", chemin_image_sortie, image, best_box, best_confidence, 8)
 
         else:
             chemin_image_sortie = "Traitement/Echec/" + image
             cv2.imwrite(chemin_image_sortie, img)
+            print("enregistré", chemin_image_sortie, image, best_box, best_confidence, 8)
     return copy_image_directory
 
 
@@ -193,7 +200,7 @@ def process_folder(folder_path):
     traitement_directory = [f for f in os.listdir("Traitement") if f not in (".DS_Store", "Echec", "result.txt")]
 
     for image in traitement_directory:
-        if image.endswith(".jpg") or image.endswith(".jpeg") :
+        if image.endswith(".jpg") or image.endswith(".jpeg"):
             source_path = os.path.join(directory, directory_path, f"{image.rstrip('_cropped.jpg')}.jpg")
             json_path = ocr(os.path.join("Traitement", image))
             result = choice(json_path)
@@ -220,6 +227,25 @@ def process_folder(folder_path):
 
 @app.route('/')
 def index():
+    root = os.listdir()
+    for f in root:
+        if f == ".DS_Store":
+            root.remove(f)
+        if f == "app.py":
+            root.remove(f)
+        if f == "requirements.txt":
+            root.remove(f)
+    print(root)
+    for f in root:
+        if f.endswith(".zip") == True:
+            os.remove(f)
+        elif f == "Traitement":
+            shutil.rmtree(f)
+        elif f == "Images":
+            shutil.rmtree(f)
+        elif f == "uploads":
+            shutil.rmtree(f)
+
     return render_template('index.html')
 
 
