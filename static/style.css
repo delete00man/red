@@ -8,6 +8,14 @@ body {
     background-size: 400% 400%;
     background-attachment: fixed;
 }
+h2 a {
+    text-decoration: none;
+    color: #333
+}
+
+h2 a:hover {
+    color: white;
+}
 
 @keyframes gradient {
     0% {

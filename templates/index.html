@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>File Upload and Processing</title>
+    <title>RED22</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <script src="{{ url_for('static', filename='main.js') }}"></script>
@@ -10,11 +10,12 @@
 <body>
     <div class="container">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="Votre Logo" class="logo">
-        <h1>Upload and Process Files</h1>
+        <h1>Upload a Zip file</h1>
         <form method="POST" action="/upload" enctype="multipart/form-data">
             <input type="file" name="zip_file">
             <input type="submit" value="Upload and Process">
         </form>
+        <h2><a href="https://arthus.notion.site/RED22-Identificator-88317892dfcb4b60a85dfe9165173182?pvs=4">How use ?</a></h2>
     </div>
     <div class="cursor-trailer"></div>
     <div class="wave-container">
