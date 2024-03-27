@@ -68,10 +68,12 @@ def crop(directory):
     # Initialisation des variables pour le meilleur objet
         best_confidence = 0
         best_box = None
-        print(image, 4)
+        class_ids = []
+        confidences = []
+        boxes = []
+
     # Parcourir les détections d'objets
         for out in outs:
-            print(out, image)
             for detection in out:
                 scores = detection[5:]
                 class_id = np.argmax(scores)
@@ -80,17 +82,17 @@ def crop(directory):
                     best_confidence = confidence
 
                 # Objet détecté
-                    center_x = int(detection[0] * width)
-                    center_y = int(detection[1] * height)
-                    w = int(detection[2] * width)
-                    h = int(detection[3] * height)
+                center_x = int(detection[0] * width)
+                center_y = int(detection[1] * height)
+                w = int(detection[2] * width)
+                h = int(detection[3] * height)
 
                 # Coordonnées du rectangle
-                    x = int(center_x - w / 2)
-                    y = int(center_y - h / 2)
+                x = int(center_x - w / 2)
+                y = int(center_y - h / 2)
 
-                    best_box = (x, y, w, h)
-                    print(image, best_box, 5)
+                best_box = (x, y, w, h)
+
 
     # Enregistrer l'image finale dans un dossier
         if best_box is not None:
@@ -248,13 +250,12 @@ def index():
 
     return render_template('index.html')
 
-
 @app.route('/upload', methods=['POST'])
 def upload():
     if os.path.exists("Images.zip"):
         os.remove("Images.zip")
 
-    os.makedirs("uploads")
+    os.makedirs("uploads", exist_ok=True)
     if request.method == 'POST':
         uploaded_zip = request.files['zip_file']
         if uploaded_zip:
