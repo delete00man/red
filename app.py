@@ -8,7 +8,9 @@ import shutil
 import re
 from google.cloud import vision
 from google.cloud.vision_v1 import types
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def crop(directory):
 
@@ -140,7 +142,7 @@ def zip_file(src, dst):
     print("zipé")
 
 
-def ocr(img, key_path='static/Model/linen-epigram-232417-b3663218b851.json'):
+def ocr(img, key_path):
 
     # Initialisation du client
     client = vision.ImageAnnotatorClient.from_service_account_json(key_path)
@@ -185,6 +187,8 @@ app = Flask(__name__)
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['SECRET_PATH'] = os.getenv('SECRET_PATH')
+
 
 
 def process_folder(folder_path):
@@ -204,7 +208,7 @@ def process_folder(folder_path):
     for image in traitement_directory:
         if image.endswith(".jpg") or image.endswith(".jpeg"):
             source_path = os.path.join(directory, directory_path, f"{image.rstrip('_cropped.jpg')}.jpg")
-            json_path = ocr(os.path.join("Traitement", image))
+            json_path = ocr(os.path.join("Traitement", image), os.getenv('SECRET_PATH'))
             result = choice(json_path)
             result_folder = "Echec" if result == "_erreur" else "Succes"
             result_path = os.path.join(directory, result_folder, f"{image.rstrip('_cropped.jpg')}{result}.jpg")
@@ -216,7 +220,7 @@ def process_folder(folder_path):
     for image in echec_directory:
         if image.endswith(".jpg") or image.endswith(".jpeg"):
             source_path = os.path.join(directory, directory_path, image)
-            json_path = ocr(os.path.join("Traitement", "Echec", image))
+            json_path = ocr(os.path.join("Traitement", "Echec", image), os.getenv('SECRET_PATH'))
             result = choice(json_path)
             result_folder = "Echec" if result == "_erreur" else "Autres"
             result_path = os.path.join(directory, result_folder, f"{image.rstrip('.jpg')}{result}.jpg")
